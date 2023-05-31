@@ -1,6 +1,7 @@
 package menu
 
 import Exit
+import ExitRouter
 import File
 
 class NoteMenu(var file: File) {
@@ -10,8 +11,8 @@ class NoteMenu(var file: File) {
         println(file.note)
         println("\n0. Выход")
         inputAndCheckCommand()
-        Exit.status = Exit.FROM_NOTE_MENU
-        Exit.executeExit()
+        ExitRouter.status = Exit.FROM_NOTE_MENU
+        ExitRouter.executeExit()
     }
 
     private fun inputAndCheckCommand() {

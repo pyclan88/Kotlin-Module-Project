@@ -1,6 +1,7 @@
 package menu
 
 import Exit
+import ExitRouter
 import File
 import Lost
 import java.lang.StringBuilder
@@ -48,23 +49,23 @@ class FileMenu(var folderName: String = FolderMenu.folderName) : AbstractMenu() 
         if (newFileName == "4 8 15 16 23 42" && folderName == "Lost") newFile =
             File(newFileName, Lost().song)
 
-        FolderMenu.archive.forEach { if (it.name == folderName) it.listOfFiles.add(newFile) }
+        FolderRepository.archive.forEach { if (it.name == folderName) it.listOfFiles.add(newFile) }
         showMenu()
     }
 
     override fun showMenu() {
-        FolderMenu.archive.forEach { if (it.name == folderName) listOfFiles = it.listOfFiles }
+        FolderRepository.archive.forEach { if (it.name == folderName) listOfFiles = it.listOfFiles }
         println("\nАрхив \"$folderName\"\nСписок заметок :")
         val menuList = mutableMapOf("0. Создать заметку" to { createNewOne() })
         for (i in listOfFiles.indices) {
             menuList["${i + 1}. ${listOfFiles[i].name}"] = {
-                Exit.status = Exit.FROM_NOTE_MENU
+                ExitRouter.status = Exit.FROM_NOTE_MENU
                 NoteMenu(listOfFiles[i]).showMenu()
             }
         }
         menuList["${menuList.size}. Выход"] = {
-            Exit.status = Exit.FROM_FILE_MENU
-            Exit.executeExit()
+            ExitRouter.status = Exit.FROM_FILE_MENU
+            ExitRouter.executeExit()
         }
         menuList.forEach { println(it.key) }
         println("\nВведите число от 0 до ${listOfFiles.lastIndex + 2}")
@@ -80,20 +81,13 @@ class FileMenu(var folderName: String = FolderMenu.folderName) : AbstractMenu() 
             print("> ")
             newFileName = readln()
             val isEmpty = newFileName.trim().isEmpty()
-            var notUnique = false
-            for (i in FolderMenu.archive) {
-                if (i.name == folderName) {
-                    for (j in i.listOfFiles) {
-                        if (j.name == newFileName) notUnique = true
-                    }
-                }
-            }
+            val isUnique = checkIfNameUnique(newFileName)
             if (isEmpty) {
                 println(
                     "Название должно содержать минимум один символ\n" +
                             "Введите название заметки:"
                 )
-            } else if (notUnique) {
+            } else if (isUnique) {
                 println(
                     "Заметки с таким названием уже существует\n" +
                             "Введите другое название заметки:"
@@ -101,6 +95,18 @@ class FileMenu(var folderName: String = FolderMenu.folderName) : AbstractMenu() 
             } else restriction = false
         }
         return newFileName
+    }
+
+    override fun checkIfNameUnique(newName: String): Boolean {
+        var notUnique = false
+        for (i in FolderRepository.archive) {
+            if (i.name == folderName) {
+                for (j in i.listOfFiles) {
+                    if (j.name == newName) notUnique = true
+                }
+            }
+        }
+        return notUnique
     }
 
 }
