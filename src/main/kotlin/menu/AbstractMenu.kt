@@ -9,4 +9,6 @@ abstract class AbstractMenu {
     abstract fun showMenu()
 
     abstract fun checkName(): String
+
+    abstract fun checkIfNameUnique(newName: String): Boolean
 }
