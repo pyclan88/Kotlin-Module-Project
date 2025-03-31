@@ -1,12 +1,12 @@
 package menu
 
 import Exit
+import ExitRouter
 import Folder
 
 class FolderMenu : AbstractMenu() {
 
     companion object {
-        internal val archive: MutableList<Folder> = mutableListOf()
         internal var folderName = ""
     }
 
@@ -16,8 +16,8 @@ class FolderMenu : AbstractMenu() {
         while (restriction) {
             print("> ")
             input = readln()
-            if (input.toIntOrNull() !in 0..archive.lastIndex + 2) {
-                println("Такого пункта нет\nВведите число от 0 до ${archive.lastIndex + 2}")
+            if (input.toIntOrNull() !in 0..FolderRepository.archive.lastIndex + 2) {
+                println("Такого пункта нет\nВведите число от 0 до ${FolderRepository.archive.lastIndex + 2}")
             } else restriction = false
         }
         return input.trim()
@@ -27,26 +27,27 @@ class FolderMenu : AbstractMenu() {
         println("\nВведите название архива:")
         val newFolderName = checkName()
         val newArchive = Folder(newFolderName, mutableListOf())
-        archive.add(newArchive)
+        FolderRepository.archive.add(newArchive)
         showMenu()
     }
 
     override fun showMenu() {
+        println("folderName = ${FileMenu().folderName}")
         println("\nСписок архивов:")
         val menuList = mutableMapOf("0. Создать архив" to { createNewOne() })
-        for (i in archive.indices) {
-            menuList["${i + 1}. ${archive[i].name}"] = {
-                Exit.status = Exit.FROM_FILE_MENU
-                folderName = archive[i].name
+        for (i in FolderRepository.archive.indices) {
+            menuList["${i + 1}. ${FolderRepository.archive[i].name}"] = {
+                ExitRouter.status = Exit.FROM_FILE_MENU
+                folderName = FolderRepository.archive[i].name
                 FileMenu().showMenu()
             }
         }
         menuList["${menuList.size}. Выход"] = {
-            Exit.status = Exit.FROM_FOLDER_MENU
-            Exit.executeExit()
+            ExitRouter.status = Exit.FROM_FOLDER_MENU
+            ExitRouter.executeExit()
         }
         menuList.forEach { println(it.key) }
-        println("\nВведите число от 0 до ${archive.lastIndex + 2}")
+        println("\nВведите число от 0 до ${FolderRepository.archive.lastIndex + 2}")
         val input = inputAndCheckCommand()
         val selectedOption = menuList.keys.find { it.startsWith(input) }
         menuList[selectedOption]?.invoke()
@@ -59,16 +60,13 @@ class FolderMenu : AbstractMenu() {
             print("> ")
             newFolderName = readln()
             val isEmpty = newFolderName.trim().isEmpty()
-            var notUnique = false
-            for (i in archive) {
-                if (i.name == newFolderName) notUnique = true
-            }
+            val isUnique = checkIfNameUnique(newFolderName)
             if (isEmpty) {
                 println(
                     "Название должно содержать минимум один символ\n" +
                             "Введите название архива:"
                 )
-            } else if (notUnique) {
+            } else if (isUnique) {
                 println(
                     "Архив с таким названием уже существует\n" +
                             "Введите другое название архива:"
@@ -76,5 +74,13 @@ class FolderMenu : AbstractMenu() {
             } else restriction = false
         }
         return newFolderName
+    }
+
+    override fun checkIfNameUnique(newName: String): Boolean {
+        var notUnique = false
+        for (i in FolderRepository.archive) {
+            if (i.name == newName) notUnique = true
+        }
+        return notUnique
     }
 }
